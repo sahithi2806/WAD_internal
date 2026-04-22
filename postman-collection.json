@@ -1,0 +1,134 @@
+{
+  "info": {
+    "name": "Product CRUD API",
+    "description": "Test Express Product API.\n\nSet {{productId}} = 1,2,3 for existing products (Laptop,Mouse,Keyboard) or create new first.\nAll GET/PUT/DELETE use manual {{productId}} for specific updates.\n\nFlow: List → Set productId → Update → Get verify.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": []
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "List Products (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products"]
+        }
+      }
+    },
+    {
+      "name": "Create Product (POST)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Success response\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data).to.have.property('id');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"New Phone\",\"price\":599.99,\"quantity\":20,\"description\":\"Test phone\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products"]
+        }
+      }
+    },
+    {
+      "name": "Get Product by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/{{productId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products", "{{productId}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Product (PUT) - Any ID",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Updated Laptop\",\"price\":1200,\"quantity\":8,\"description\":\"Updated gaming laptop\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products/{{productId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products", "{{productId}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Product (DELETE)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/{{productId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products", "{{productId}}"]
+        }
+      }
+    }
+  ]
+}

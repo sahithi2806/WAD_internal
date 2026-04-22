@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product DApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">Product Management</h1>
+
+        <!-- Add Product Form -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Add New Product</h2>
+            <form id="productForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="name" placeholder="Product Name" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <input type="number" id="price" placeholder="Price" step="0.01" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <input type="number" id="quantity" placeholder="Quantity" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <textarea id="description" placeholder="Description" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 md:col-span-2"></textarea>
+                <button type="submit" id="addBtn" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 md:col-span-2 font-semibold">Add Product</button>
+            </form>
+        </div>
+        <!-- Products Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6 border-b">
+                <h2 class="text-2xl font-semibold">Products List</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="productsTable" class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/products';
+        let editingId = null;
+        window.addEventListener('load', loadProducts);
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(API_BASE);
+                const data = await response.json();
+                if (data.success) {
+                    displayProducts(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+        // Display products in table
+        function displayProducts(products) {
+            const tbody = document.getElementById('productsBody');
+            tbody.innerHTML = products.map(product => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">${product.id}</td>
+                    <td class="px-6 py-4 font-medium">${product.name}</td>
+                    <td class="px-6 py-4 text-green-600 font-semibold">$${product.price.toFixed(2)}</td>
+                    <td class="px-6 py-4">${product.quantity}</td>
+                    <td class="px-6 py-4 max-w-xs truncate">${product.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editProduct(${product.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                        <button onclick="deleteProduct(${product.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Add or Update Produc
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productData = {
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                quantity: parseInt(document.getElementById('quantity').value),
+                description: document.getElementById('description').value
+            };
+            try {
+                let response;
+                if (editingId) {
+                    response = await fetch(`${API_BASE}/${editingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(productData)
+                    });
+                } else {
+                    response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(productData)
+                    });
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    loadProducts();
+                    document.getElementById('productForm').reset();
+                    editingId = null;
+                    document.getElementById('addBtn').textContent = 'Add Product';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving product');
+            }
+        });
+
+        // Edit product
+        function editProduct(id) {
+            fetch(`${API_BASE}/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const product = data.data;
+                        document.getElementById('name').value = product.name;
+                        document.getElementById('price').value = product.price;
+                        document.getElementById('quantity').value = product.quantity;
+                        document.getElementById('description').value = product.description;
+                        editingId = id;
+                        document.getElementById('addBtn').textContent = 'Update Product';
+                        document.getElementById('name').focus();
+                    }
+                });
+        }
+
+        // Delete product
+        async function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                try {
+                    const response = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                    const data = await response.json();
+                    if (data.success) {
+                        loadProducts();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error deleting product');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

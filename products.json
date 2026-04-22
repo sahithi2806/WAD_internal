@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Laptop",
+    "price": 1000,
+    "quantity": 5,
+    "description": "High-performance laptop"
+  },
+  {
+    "id": 2,
+    "name": "Mouse",
+    "price": 29.99,
+    "quantity": 50,
+    "description": "Wireless mouse"
+  }
+]
